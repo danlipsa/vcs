@@ -798,6 +798,125 @@ class VTKVCSBackend(object):
                                   priority=priority,
                                   create_renderer=True)
 
+
+    def renderTemplateText(self, tmpl, data, gm, taxis, zaxis, X=None, Y=None, **kargs):
+        # ok first basic template stuff, let's store the displays
+        # because we need to return actors for min/max/mean
+        displays = tmpl.drawAttributes(self.canvas, data, gm, bg=self.bg, **kargs)        
+        returned = {}
+        for d in displays:
+            if d is None:
+                continue
+            texts = d.backend.get("vtk_backend_text_actors", [])
+            for t in texts:
+                # ok we had a text actor, let's see if it's min/max/mean
+                txt = t.GetInput()
+                s0 = txt.split()[0]
+                if s0 in ["Min", "Max", "Mean"]:
+                    returned["vtk_backend_%s_text_actor" % s0] = t
+                else:
+                    returned[
+                        "vtk_backend_%s_text_actor" %
+                        d.backend["vtk_backend_template_attribute"]] = t
+            self.canvas.display_names.remove(d.name)
+            del(vcs.elements["display"][d.name])
+        # Sometimes user passes "date" as an attribute to replace date
+        if hasattr(data, "user_date"):
+            taxis = cdms2.createAxis(
+                [cdtime.s2r(data.user_date, "days since 1900").value])
+            taxis.designateTime()
+            taxis.units = "days since 1900"
+            if zaxis is not None and zaxis.isTime():
+                zaxis = taxis
+        if taxis is not None:
+            try:
+                tstr = str(
+                    cdtime.reltime(
+                        taxis[0],
+                        taxis.units).tocomp(
+                        taxis.getCalendar()))
+                # ok we have a time axis let's display the time
+                crdate = vcs2vtk.applyAttributesFromVCStmpl(tmpl, "crdate")
+                crdate.string = tstr.split()[0].replace("-", "/")
+                crtime = vcs2vtk.applyAttributesFromVCStmpl(tmpl, "crtime")
+                crtime.string = tstr.split()[1]
+                if not (None, None, None) in self._renderers.keys():
+                    ren = self.createRenderer()
+                    self.renWin.AddRenderer(ren)
+                    self.setLayer(ren, 1)
+                    self._renderers[(None, None, None)] = (ren, 1, 1)
+                else:
+                    ren, xratio, yratio = self._renderers[(None, None, None)]
+                tt, to = crdate.name.split(":::")
+                tt = vcs.elements["texttable"][tt]
+                to = vcs.elements["textorientation"][to]
+                if crdate.priority > 0:
+                    actors = vcs2vtk.genTextActor(ren, to=to, tt=tt)
+                    returned["vtk_backend_crdate_text_actor"] = actors[0]
+                del(vcs.elements["texttable"][tt.name])
+                del(vcs.elements["textorientation"][to.name])
+                del(vcs.elements["textcombined"][crdate.name])
+                tt, to = crtime.name.split(":::")
+                tt = vcs.elements["texttable"][tt]
+                to = vcs.elements["textorientation"][to]
+                if crtime.priority > 0:
+                    actors = vcs2vtk.genTextActor(ren, to=to, tt=tt)
+                    returned["vtk_backend_crtime_text_actor"] = actors[0]
+                del(vcs.elements["texttable"][tt.name])
+                del(vcs.elements["textorientation"][to.name])
+                del(vcs.elements["textcombined"][crtime.name])
+            except:
+                pass
+        if zaxis is not None:
+            try:
+                # ok we have a zaxis to draw
+                zname = vcs2vtk.applyAttributesFromVCStmpl(tmpl, "zname")
+                zname.string = zaxis.id
+                zvalue = vcs2vtk.applyAttributesFromVCStmpl(tmpl, "zvalue")
+                if zaxis.isTime():
+                    zvalue.string = str(zaxis.asComponentTime()[0])
+                else:
+                    zvalue.string = "%g" % zaxis[0]
+                if not (None, None, None) in self._renderers.keys():
+                    ren = self.createRenderer()
+                    self.renWin.AddRenderer(ren)
+                    self.setLayer(ren, 1)
+                    self._renderers[(None, None, None)] = (ren, 1, 1)
+                else:
+                    ren, xratio, yratio = self._renderers[(None, None, None)]
+                tt, to = zname.name.split(":::")
+                tt = vcs.elements["texttable"][tt]
+                to = vcs.elements["textorientation"][to]
+                if zname.priority > 0:
+                    vcs2vtk.genTextActor(ren, to=to, tt=tt)
+                del(vcs.elements["texttable"][tt.name])
+                del(vcs.elements["textorientation"][to.name])
+                del(vcs.elements["textcombined"][zname.name])
+                if hasattr(zaxis, "units"):
+                    zunits = vcs2vtk.applyAttributesFromVCStmpl(tmpl, "zunits")
+                    zunits.string = zaxis.units
+                    if zunits.priority > 0:
+                        tt, to = zunits.name.split(":::")
+                        tt = vcs.elements["texttable"][tt]
+                        to = vcs.elements["textorientation"][to]
+                        vcs2vtk.genTextActor(ren, to=to, tt=tt)
+                        del(vcs.elements["texttable"][tt.name])
+                        del(vcs.elements["textorientation"][to.name])
+                        del(vcs.elements["textcombined"][zunits.name])
+                tt, to = zvalue.name.split(":::")
+                tt = vcs.elements["texttable"][tt]
+                to = vcs.elements["textorientation"][to]
+                if zvalue.priority > 0:
+                    actors = vcs2vtk.genTextActor(ren, to=to, tt=tt)
+                    returned["vtk_backend_zvalue_text_actor"] = actors[0]
+                del(vcs.elements["texttable"][tt.name])
+                del(vcs.elements["textorientation"][to.name])
+                del(vcs.elements["textcombined"][zvalue.name])
+            except:
+                pass
+        return returned
+    
+
     def renderTemplate(self, tmpl, data, gm, taxis, zaxis, X=None, Y=None, **kargs):
         # ok first basic template stuff, let's store the displays
         # because we need to return actors for min/max/mean
