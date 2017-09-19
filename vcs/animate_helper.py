@@ -19,7 +19,7 @@ def showerror(msg):
 # Animate wrapper for VCS.                                                  #
 #                                                                           #
 #############################################################################
-class animate_obj_old(vcs.bestMatch):
+class animate_obj_old(object):
 
     """
     Animate the contents of the VCS Canvas. The animation can also be controlled from
@@ -602,7 +602,7 @@ class RT:
 # http://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
 
 
-class StoppableThread(threading.Thread, vcs.bestMatch):
+class StoppableThread(threading.Thread, object):
 
     def __init__(self):
         threading.Thread.__init__(self)
@@ -626,7 +626,7 @@ class StoppableThread(threading.Thread, vcs.bestMatch):
         self._running.wait()
 
 
-class AnimationCreateParams(vcs.bestMatch):
+class AnimationCreateParams(object):
 
     def __init__(self, a_min=None, a_max=None, axis=0):
         self.a_min = a_min
@@ -675,7 +675,7 @@ class AnimationCreate(StoppableThread):
             self.controller.signals.created.emit()
 
 
-class AnimationPlaybackParams(vcs.bestMatch):
+class AnimationPlaybackParams(object):
 
     def __init__(self):
         self.zoom_factor = 1.0

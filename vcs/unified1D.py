@@ -142,7 +142,7 @@ def process_src(nm, code, typ):
         vcs.elements["scatter"][onm] = gm
 
 
-class G1d(vcs.bestMatch):
+class G1d(object):
 
     __doc__ = """
     This graphics method displays a line plot from 1D data array (i.e. a

@@ -76,7 +76,7 @@ def process_src(nm, code):
 #############################################################################
 
 
-class Tt(vcs.bestMatch):
+class Tt(object):
 
     """
     The (Tt) Text Table lists text attribute set names that define the font, spacing,

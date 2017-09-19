@@ -105,7 +105,7 @@ def process_src(nm, code):
 # Marker (Tm) Class.                                                        #
 #                                                                           #
 #############################################################################
-class Tm(vcs.bestMatch):
+class Tm(object):
 
     """
     The Marker object allows the manipulation of marker type, size, and color index.
@@ -225,7 +225,6 @@ class Tm(vcs.bestMatch):
         'worldcoordinate',
         'x',
         'y',
-        'projection',
         'colormap',
         '_name',
         '_color',

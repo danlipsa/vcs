@@ -43,7 +43,7 @@ def process_src(nm, code):
     gm.parameters = params
 
 
-class Proj(vcs.bestMatch):
+class Proj(object):
 
     """
     The projection secondary method (Proj) is used when plotting 2D data, and define

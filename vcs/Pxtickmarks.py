@@ -23,7 +23,6 @@
 #
 #
 import VCS_validation_functions
-import vcs
 
 #############################################################################
 #                                                                           #
@@ -32,7 +31,7 @@ import vcs
 #############################################################################
 
 
-class Pxt(vcs.bestMatch):
+class Pxt(object):
 
     """
     The Template text object allows the manipulation of line type, width, and color index.

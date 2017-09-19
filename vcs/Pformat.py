@@ -23,7 +23,6 @@
 #
 #
 import VCS_validation_functions
-import vcs
 #############################################################################
 #                                                                           #
 # Template text (Pf) Class.                                                 #
@@ -31,7 +30,7 @@ import vcs
 #############################################################################
 
 
-class Pf(vcs.bestMatch):
+class Pf(object):
 
     """
     The Template text object allows the manipulation of line type, width, and color index.

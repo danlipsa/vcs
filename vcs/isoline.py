@@ -193,7 +193,7 @@ def process_src(nm, code):
         g.clockwise = gd.clockwise
 
 
-class Gi(vcs.bestMatch):
+class Gi(object):
 
     __doc__ = """
     The Isoline graphics method (Gi) draws lines of constant value at specified

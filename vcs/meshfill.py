@@ -147,7 +147,7 @@ def process_src(nm, code):
 #                                                                           #
 #############################################################################
 # class Gfm(graphics_method_core):
-class Gfm(vcs.bestMatch):
+class Gfm(object):
 
     __doc__ = """
     The meshfill graphics method (Gfm) displays a two-dimensional data array

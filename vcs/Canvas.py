@@ -299,7 +299,7 @@ def _process_keyword(obj, target, source, keyargs, default=None):
     return arg
 
 
-class Canvas(vcs.bestMatch):
+class Canvas(object):
     """Usually created using :py:func:`vcs.init`, this object provides easy access
     to the functionality of the entire VCS module:
 
@@ -349,13 +349,12 @@ class Canvas(vcs.bestMatch):
         'enableLogo',
         'backend',
         'configurator',
-        '_Canvas__last_plot_actual_args',
-        '_Canvas__last_plot_keyargs',
         '__last_plot_actual_args',
         '__last_plot_keyargs',
         '_continents',
         '_continents_line',
         '_savedcontinentstype',
+        '__weakref__',
     ]
 
 #     def applicationFocusChanged(self, old, current ):

@@ -42,7 +42,7 @@ import textorientation
 #############################################################################
 
 
-class Tc(vcs.bestMatch):
+class Tc(object):
 
     """
     The (Tc) Text Combined class will combine a text table class and a text orientation
