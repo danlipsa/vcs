@@ -45,7 +45,7 @@ except BaseException:
     hasVCSAddons = False
 
 
-from colors import rgb2str, str2rgb, matplotlib2vcs  # noqa
+from colors import rgb2str, str2rgb, matplotlib2vcs, loadmatplotlibcolormaps  # noqa
 
 indent = 1
 sort_keys = True
@@ -1146,11 +1146,13 @@ def minmax(*data):
         if d is None:
             return mx, mn
         from numpy.ma import maximum, minimum, count
+        if isinstance(d, (int, float)):
+            return maximum(d, mx), minimum(d, mn)
         try:
             if count(d) == 0:
                 return mx, mn
-            mx = float(maximum(mx, float(maximum(d))))
-            mn = float(minimum(mn, float(minimum(d))))
+            mx = float(maximum(mx, maximum.reduce(d, axis=None)))
+            mn = float(minimum(mn, minimum.reduce(d, axis=None)))
         except BaseException:
             for i in d:
                 mx, mn = myfunction(i, mx, mn)
@@ -1547,7 +1549,7 @@ def getcolors(levs, colors=None, split=1, white="white"):
             split = 1
     # Take care of argument white
     if isinstance(white, basestring):
-        white = genutil.colors.str2rgb(white)
+        white = [value/2.55 for value in genutil.colors.str2rgb(white)]
 
     # Gets first and last value, and adjust if extensions
     mn = levs[0]

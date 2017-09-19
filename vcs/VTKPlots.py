@@ -37,7 +37,6 @@ class VCSInteractorStyle(vtk.vtkInteractorStyleUser):
         self.AddObserver(
             "LeftButtonReleaseEvent",
             parent.leftButtonReleaseEvent)
-        self.AddObserver("ModifiedEvent", parent.configureEvent)
         self.AddObserver("ConfigureEvent", parent.configureEvent)
         if sys.platform == "darwin":
             self.AddObserver("RenderEvent", parent.renderEvent)
@@ -119,7 +118,6 @@ class VTKVCSBackend(object):
             self.renWin.AddObserver(
                 "LeftButtonReleaseEvent",
                 self.leftButtonReleaseEvent)
-            self.renWin.AddObserver("ModifiedEvent", self.configureEvent)
             self.renWin.AddObserver("ConfigureEvent", self.configureEvent)
             self.renWin.AddObserver("EndEvent", self.endEvent)
         if interactor is None:
@@ -278,10 +276,6 @@ class VTKVCSBackend(object):
     def configureEvent(self, obj, ev):
         if not self.renWin:
             return
-        cursor = self.renWin.GetCurrentCursor()
-        if sys.platform == "darwin" and ev == "ModifiedEvent" and cursor != self.oldCursor:
-            self.oldCursor = cursor
-            return
 
         if self.get3DPlot() is not None:
             return
@@ -423,7 +417,13 @@ class VTKVCSBackend(object):
     def createDefaultInteractor(self, ren=None):
         defaultInteractor = self.renWin.GetInteractor()
         if defaultInteractor is None:
-            defaultInteractor = vtk.vtkRenderWindowInteractor()
+            if self.bg:
+                # this is only used to pass event to vtk objects
+                # it does not listen to events form the window
+                # it is used in vtkweb
+                defaultInteractor = vtk.vtkGenericRenderWindowInteractor()
+            else:
+                defaultInteractor = vtk.vtkRenderWindowInteractor()
         self.vcsInteractorStyle = VCSInteractorStyle(self)
         if ren:
             self.vcsInteractorStyle.SetCurrentRenderer(ren)
@@ -456,10 +456,8 @@ class VTKVCSBackend(object):
 
         if self.renderer is None:
             self.renderer = self.createRenderer()
-            if not self.bg:
-                self.createDefaultInteractor(self.renderer)
+            self.createDefaultInteractor(self.renderer)
             self.renWin.AddRenderer(self.renderer)
-            self.renWin.AddObserver("ModifiedEvent", self.configureEvent)
         if self.bg:
             self.renWin.SetOffScreenRendering(True)
         if "open" in kargs and kargs["open"]:
@@ -558,7 +556,7 @@ class VTKVCSBackend(object):
                 self._geometry["width"] = self.canvas.bgX
                 self._geometry["height"] = self.canvas.bgY
         else:
-            self.renWin.SetSize(W, H)
+            self.setsize(W, H)
             self.canvas.bgX = W
             self.canvas.bgY = H
 
@@ -571,7 +569,7 @@ class VTKVCSBackend(object):
     def initialSize(self, width=None, height=None):
         # Gets user physical screen dimensions
         if isinstance(width, int) and isinstance(height, int):
-            self.renWin.SetSize(width, height)
+            self.setsize(width, height)
             self._lastSize = (width, height)
             return
 
@@ -594,7 +592,7 @@ class VTKVCSBackend(object):
         # make the dimensions even for Macs
         bgX = _makeEven(bgX)
         bgY = _makeEven(bgY)
-        self.renWin.SetSize(bgX, bgY)
+        self.setsize(bgX, bgY)
         self.canvas.bgX = bgX
         self.canvas.bgY = bgY
         self._lastSize = (bgX, bgY)
@@ -628,9 +626,13 @@ class VTKVCSBackend(object):
         y = args[1]
 
         if self.renWin is not None:
-            self.renWin.SetSize(x, y)
+            self.setsize(x, y)
         self._geometry = {'width': x, 'height': y}
         self._lastSize = (x, y)
+
+    def setsize(self, x, y):
+        self.renWin.SetSize(x, y)
+        self.configureEvent(None, None)
 
     def flush(self):
         if self.renWin is not None:
@@ -648,7 +650,7 @@ class VTKVCSBackend(object):
         self.createRenWin(**kargs)
         if self.bg:
             self.renWin.SetOffScreenRendering(True)
-            self.renWin.SetSize(self.canvas.bgX, self.canvas.bgY)
+            self.setsize(self.canvas.bgX, self.canvas.bgY)
         self.cell_coordinates = kargs.get('cell_coordinates', None)
         self.canvas.initLogoDrawing()
         if gtype == "text":
@@ -1248,8 +1250,7 @@ x.geometry(1200,800)
                 # otherwise, canvas.bgX,canvas.bgY will win
                 self.canvas.bgX = width
                 self.canvas.bgY = height
-                self.renWin.SetSize(width, height)
-                self.configureEvent(None, None)
+                self.setsize(width, height)
             else:
                 user_dims = None
 
@@ -1262,9 +1263,8 @@ x.geometry(1200,800)
             imgfiltr.SetInputBufferTypeToRGBA()
 
         self.hideGUI()
-        imgfiltr.Update()
-        self.showGUI(render=False)
         self.renWin.Render()
+        self.showGUI(render=False)
 
         writer = vtk.vtkPNGWriter()
         compression = args.get('compression', 5)  # get compression from user
@@ -1278,8 +1278,8 @@ x.geometry(1200,800)
         writer.Write()
         if user_dims is not None:
             self.canvas.bgX, self.canvas.bgY, w, h = user_dims
-            self.renWin.SetSize(w, h)
-            self.configureEvent(None, None)
+            self.setsize(w, h)
+            self.renWin.Render()
 
     def cgm(self, file):
         if self.renWin is None:
